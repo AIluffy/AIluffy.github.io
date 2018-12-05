@@ -83,4 +83,4 @@ theme: icarus
 deploy:
   type: git
   repo: https://github.com/AIluffy/AIluffy.github.io.git
-  branch: gh-pages
+  branch: master
