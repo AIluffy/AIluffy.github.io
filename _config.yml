@@ -82,5 +82,5 @@ theme: icarus
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://github.com/AIluffy/AIluffy.github.io.git
+  repo: https://blog-token@github.com/AIluffy/AIluffy.github.io.git
   branch: master

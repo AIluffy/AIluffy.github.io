@@ -1,26 +1,31 @@
 language: node_js
 node_js: stable
 
-# S: Build Lifecycle
-install:
-  - npm install
-
-script:
-  - hexo g
-
-after_script:
-  - cd ./public
-  - git init
-  - git config user.name "ailuffy"
-  - git config user.email "ailuffy@outlook.com"
-  - git add .
-  - git commit -m " ':memo:' Update blog"
-  - git push --force --quiet "https://${blog-token}@${GH_REF}" master:master
-# E: Build LifeCycle
+# 指定缓存模块，可选。缓存可加快编译速度
+cache:
+  directories:
+    - node_modules
 
 branches:
   only:
     - blog-generator
-env:
- global:
-   - GH_REF: github.com/AIluffy/AIluffy.github.io.git
+
+before_install:
+  - npm install -g hexo-cli
+
+# S: Build Lifecycle
+install:
+  - npm install
+  - npm install hexo-deployer-git --save
+
+# 执行清缓存，生成网页操作
+script:
+  - hexo clean
+  - hexo generate
+
+after_script:
+  - git config user.name "ailuffy"
+  - git config user.email "ailuffy@outlook.com"
+  - sed -i "s/blog-token/${blog-token}/g" ./_config.yml
+  - hexo deploy
+# E: Build LifeCycle
