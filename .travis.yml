@@ -26,6 +26,6 @@ script:
 after_script:
   - git config user.name "ailuffy"
   - git config user.email "ailuffy@outlook.com"
-  - sed -i "s/blog-token/${blog-token}/g" ./_config.yml
+  - sed -i "s/blog-token/${GH_TOKEN}/g" ./_config.yml
   - hexo deploy
 # E: Build LifeCycle
