@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>私聊Javascript的Private - 蜗牛🐌</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="众所周知，Javascript是一门基于原型编程的动态脚本语言，虽然它也支持面向对象的编程范式，但想要做到像传统编程语言那样使用OOP，Javascript依然存在这样那样的不足。 从ES6开始，JS开始支持使用Class来编写类，但是该语法依然不够完善，一个显而易见的缺点就是我们无法使用private关键字定义变量。在其它面向对象的语言中，private修饰的成员或方法只能够在其定义的类中的方法">
+<meta name="keywords" content="Javascript,语法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="私聊Javascript的Private">
+<meta property="og:url" content="https://love2ai.com/2019/03/06/私聊Javascript的Private/index.html">
+<meta property="og:site_name" content="蜗牛🐌">
+<meta property="og:description" content="众所周知，Javascript是一门基于原型编程的动态脚本语言，虽然它也支持面向对象的编程范式，但想要做到像传统编程语言那样使用OOP，Javascript依然存在这样那样的不足。 从ES6开始，JS开始支持使用Class来编写类，但是该语法依然不够完善，一个显而易见的缺点就是我们无法使用private关键字定义变量。在其它面向对象的语言中，private修饰的成员或方法只能够在其定义的类中的方法">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png">
+<meta property="og:updated_time" content="2019-04-10T07:57:44.149Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="私聊Javascript的Private">
+<meta name="twitter:description" content="众所周知，Javascript是一门基于原型编程的动态脚本语言，虽然它也支持面向对象的编程范式，但想要做到像传统编程语言那样使用OOP，Javascript依然存在这样那样的不足。 从ES6开始，JS开始支持使用Class来编写类，但是该语法依然不够完善，一个显而易见的缺点就是我们无法使用private关键字定义变量。在其它面向对象的语言中，private修饰的成员或方法只能够在其定义的类中的方法">
+<meta name="twitter:image" content="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png">
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/AI.svg" alt="私聊Javascript的Private" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">文档</a>
+                
+                <a class="navbar-item" href="/categories">种类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    16 分钟 读完 (大约 2446 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                私聊Javascript的Private
+            
+        </h1>
+        <div class="content">
+            <p>众所周知，Javascript是一门基于原型编程的动态脚本语言，虽然它也支持面向对象的编程范式，但想要做到像传统编程语言那样使用OOP，Javascript依然存在这样那样的不足。</p>
+<p>从ES6开始，JS开始支持使用Class来编写类，但是该语法依然不够完善，一个显而易见的缺点就是我们无法使用private关键字定义变量。在其它面向对象的语言中，private修饰的成员或方法只能够在其定义的类中的方法中引用，无法通过该类及派生类的对象访问。<br><a id="more"></a></p>
+<p>为了实现Javascript中的private，防止数据在运行时被改变，本文总结了五类方法来达成这一目的，接下来将一一介绍</p>
+<p><img src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt=""></p>
+<h3 id="一-使用命名规则-xx"><a href="#一-使用命名规则-xx" class="headerlink" title="一. 使用命名规则 (_xx)"></a>一. 使用命名规则 (_xx)</h3><p>在一个工程中，为了区分代码中的私有成员和公有成员，当我们表示一个成员是私有时，就以下划线开头的命名规则来命名。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Company</span> </span>&#123;</span><br><span class="line">  <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">    <span class="hljs-comment">//public</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.name = name;</span><br><span class="line">    <span class="hljs-comment">//private</span></span><br><span class="line">    <span class="hljs-keyword">this</span>._asset = <span class="hljs-string">'computer'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  getAsset() &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._asset;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的Company类中，_asset表示私有成员，只能通过调用getAsset方法来获取。然而我们并不能阻止外部直接访问这个变量并修改它。<br><figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> company = <span class="hljs-keyword">new</span> Company(<span class="hljs-string">'netease'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(company.getAsset());   <span class="hljs-comment">// computer</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(company._asset)    <span class="hljs-comment">// computer</span></span><br><span class="line">company._asset = <span class="hljs-string">'desk'</span>;</span><br><span class="line"><span class="hljs-built_in">console</span>.log(company.getAsset());   <span class="hljs-comment">//desk</span></span><br></pre></td></tr></table></figure></p>
+<p>可以看到，使用命名规则并不能真正的使变量私有化，更多的是作为一种编码规范，约定了代码中的哪些成员是私有的，使得在后期的代码维护中可以一目了然。在后面介绍的方法中，我们也将使用这种命名规则来表示私有成员。</p>
+<h3 id="二-使用闭包-closure"><a href="#二-使用闭包-closure" class="headerlink" title="二. 使用闭包 (closure)"></a>二. 使用闭包 (closure)</h3><blockquote>
+<p>闭包是函数和声明该函数的词法环境的组合</p>
+</blockquote>
+<p>下面的例子展示了如何使用闭包封装私有成员变量。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Employee</span>(<span class="hljs-params"></span>) </span>&#123;</span><br><span class="line">  <span class="hljs-keyword">const</span> <span class="hljs-keyword">this</span>$ = &#123;&#125;;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">      <span class="hljs-keyword">this</span>$._name = name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    get name() &#123;</span><br><span class="line">      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>$._name</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Employee(...arguments)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee._name)   <span class="hljs-comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，外部环境不能直接访问闭包内的变量‘this$’对象内的属性，从而实现Employee对象成员的私有化。然而闭包的缺点也很明显，便是其所封装的变量常驻内存，如果管理不善，有可能会造成内存泄漏。那么除了使用闭包，是否还有其它方案可以实现对象成员的私有化呢？答案是yes，接下来的章节我们将考察如何使用ES6新增的特性实现Private成员变量。</p>
+<h3 id="三-使用WeakMap"><a href="#三-使用WeakMap" class="headerlink" title="三. 使用WeakMap"></a>三. 使用WeakMap</h3><p>WeakMap是ES6中新增的数据类型，它有一个很大的特点，就是无法遍历，由于WeakMap的key存储的对象是弱引用，所以它的key是无法枚举的。（如果key是可枚举的话，其列表将会受垃圾回收机制的影响，从而得到不确定的结构）利用WeakMap这一特性，我们可以实现对象的私有成员。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> map = <span class="hljs-keyword">new</span> <span class="hljs-built_in">WeakMap</span>();</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 用来保存每个对象实例的私有成员</span></span><br><span class="line"><span class="hljs-keyword">const</span> internal = <span class="hljs-function"><span class="hljs-params">obj</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (!map.has(obj)) &#123;</span><br><span class="line">    map.set(obj, &#123;&#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">return</span> map.get(obj);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>&#123;</span><br><span class="line">  <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">    internal(<span class="hljs-keyword">this</span>)._name = name;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  get name() &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> internal(<span class="hljs-keyword">this</span>)._name;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee._name)   <span class="hljs-comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>虽然我们无法直接通过Employee实例访问到私有属性_name，但是由于存储私有成员的WeakMap对象暴露在外部，我们依然可以通过修改WeakMap来达到访问并修改employee私有成员的目的。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">map.get(employee)._name = <span class="hljs-string">'boss'</span>;</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)   <span class="hljs-comment">// 'boss'</span></span><br></pre></td></tr></table></figure>
+<p>所以为了更进一步的优化，WeakMap往往会结合闭包来实现私有成员。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Employee</span>(<span class="hljs-params"></span>) </span>&#123;</span><br><span class="line">  <span class="hljs-keyword">const</span> private = <span class="hljs-keyword">new</span> <span class="hljs-built_in">WeakMap</span>();</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">const</span> internal = <span class="hljs-function"><span class="hljs-params">obj</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-keyword">if</span> (!private.has(obj)) &#123;</span><br><span class="line">      private.set(obj, &#123;&#125;);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="hljs-keyword">return</span> private.get(obj);</span><br><span class="line">  &#125;;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">      internal(<span class="hljs-keyword">this</span>)._name = name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    get name() &#123;</span><br><span class="line">      <span class="hljs-keyword">return</span> internal(<span class="hljs-keyword">this</span>)._name;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Employee(...arguments)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee._name)   <span class="hljs-comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>因为WeakMap的每个键对自己所引用对象的引用都是 “弱引用”，所以当没有其他引用和该键引用同一个对象时,这个对象将会被当作垃圾回收。这样，闭包所引起的潜在内存泄漏问题就得到来解决。</p>
+<h3 id="四-使用Symbol"><a href="#四-使用Symbol" class="headerlink" title="四. 使用Symbol"></a>四. 使用Symbol</h3><p>同WeakMap一样，Symbol也是ES6新增的基本数据类型。Symbol作为对象属性不可见，意味着无法通过遍历或者JSON.stringify访问到，基于这种特性，我们也可以创建对象的私有属性。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> _name = <span class="hljs-built_in">Symbol</span>(<span class="hljs-string">'name'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span></span>&#123;</span><br><span class="line">  <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>[_name] = name;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  get name() &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>[_name];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee._name)   <span class="hljs-comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>使用Symbol来隐藏数据其实也是一种不错的方案，然而同WeakMap一样，它依然有被访问到并修改的风险。通过调用Object.getOwnPropertySymbols()方法，我们可以访问到这个对象的所有Symbol属性，并对其做出修改。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> symbol <span class="hljs-keyword">of</span> <span class="hljs-built_in">Object</span>.getOwnPropertySymbols(employee)) &#123;</span><br><span class="line">  <span class="hljs-built_in">console</span>.log(employee[symbol])  <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="五-使用Proxy"><a href="#五-使用Proxy" class="headerlink" title="五. 使用Proxy"></a>五. 使用Proxy</h3><p>Proxy也是ES6新增对象，它的作用就是在目标对象之前架设一层“拦截”。当外界访问该对象，都必须先通过这层拦截，因此提供了一种机制，可以对外界的访问进行过滤和改写。</p>
+<p>利用这一特性，我们可以按照命名规则，对象的私有属性命名以下划线开头，通过代理属性的get和set方法，拦截外部对对象私有属性的访问，从而实现对象的封装。</p>
+<p>首先我们定义一个包含陷阱的占位符对象handler，其中的陷阱便是get和set，通过这两个陷阱来控制属性的读写。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> handler = &#123;</span><br><span class="line">  get: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">target, key</span>) </span>&#123;</span><br><span class="line">   <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Attempt to access private Property'</span>);</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   <span class="hljs-keyword">return</span> target[key]</span><br><span class="line">  &#125;,</span><br><span class="line">  set: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">target, key, value</span>) </span>&#123;</span><br><span class="line">   <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Attempt to accsess private Property'</span>);</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   target[key] = value;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的两个陷阱代理了get和set，每当要访问对象成员时，都会检测是否私有。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span></span>&#123;</span><br><span class="line">  <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>._name = name;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  get name() &#123;</span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._name;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(<span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>), handler);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name);    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee._name);   <span class="hljs-comment">// Error: Attempt to access private Property</span></span><br><span class="line"></span><br><span class="line">employee._name = <span class="hljs-string">'boss'</span>;  <span class="hljs-comment">// Error: Attempt to access private Property</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(square.area) <span class="hljs-comment">// 100</span></span><br><span class="line"><span class="hljs-built_in">console</span>.log(square <span class="hljs-keyword">instanceof</span> Shape)</span><br></pre></td></tr></table></figure>
+<p>当尝试用JSON.stringify序列化employee对象时，因为会访问到私有属性，所以会报错。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-built_in">JSON</span>.stringify(employee)   </span><br><span class="line"><span class="hljs-comment">//Error: Attempt to access private Property</span></span><br><span class="line"><span class="hljs-comment">//at Object.get (fawicagejo.js:4:13)</span></span><br><span class="line"><span class="hljs-comment">//at JSON.stringify (&lt;anonymous&gt;)</span></span><br></pre></td></tr></table></figure>
+<p>参考<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify" target="_blank" rel="noopener">MDN</a></p>
+<blockquote>
+<p>如果一个被序列化的对象拥有 toJSON 方法，那么该 toJSON 方法就会覆盖该对象默认的序列化行为：不是那个对象被序列化，而是调用 toJSON 方法后的返回值会被序列化</p>
+</blockquote>
+<p>所以需要改写get陷阱。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">get: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">target, key</span>) </span>&#123;</span><br><span class="line">  <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Attempt to access private property'</span>);</span><br><span class="line">  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (key === <span class="hljs-string">'toJSON'</span>) &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> obj = &#123;&#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> key <span class="hljs-keyword">in</span> target) &#123;</span><br><span class="line">      <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] !== <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">        obj[key] = target[key];</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> obj;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">return</span> target[key];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>改写完后，再通过JSON.stringify()便能够正常序列化对象了。</p>
+<p>不过以上方法依然存在一个问题，就是使用迭代，我们依然可以访问到对象的私有属性。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>但是我们依然可以通过迭代的形式依然能遍历到私有属性名，比如：<br><figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> key <span class="hljs-keyword">in</span> employee) &#123;</span><br><span class="line">  <span class="hljs-built_in">console</span>.log(key)</span><br><span class="line">&#125;</span><br><span class="line"><span class="hljs-comment">// "_name"</span></span><br></pre></td></tr></table></figure></p>
+<p>这个时候，我们需要使用getOwnPropertyDescriptor陷阱，将私有属性的属性描述符中的enumerable设置为false。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">getOwnPropertyDescriptor(target, key) &#123;</span><br><span class="line">  <span class="hljs-keyword">const</span> desc = <span class="hljs-built_in">Object</span>.getOwnPropertyDescriptor(target, key);</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">    desc.enumerable = <span class="hljs-literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">return</span> desc;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>完整代码如下</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> handler = &#123;</span><br><span class="line">  get: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">target, key</span>) </span>&#123;</span><br><span class="line">   <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Attempt to access private property'</span>);</span><br><span class="line">   &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (key === <span class="hljs-string">'toJSON'</span>) &#123;</span><br><span class="line">     <span class="hljs-keyword">const</span> obj = &#123;&#125;;</span><br><span class="line">     </span><br><span class="line">     <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> key <span class="hljs-keyword">in</span> target) &#123;</span><br><span class="line">       <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] !== <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">         obj[key] = target[key];</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> obj;</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   <span class="hljs-keyword">return</span> target[key];</span><br><span class="line"> &#125;,</span><br><span class="line">  set: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">target, key, value</span>) </span>&#123;</span><br><span class="line">   <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Attempt to accsess private Property'</span>);</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   target[key] = value;</span><br><span class="line">  &#125;,</span><br><span class="line">  getOwnPropertyDescriptor(target, key) &#123;</span><br><span class="line">   <span class="hljs-keyword">const</span> desc = <span class="hljs-built_in">Object</span>.getOwnPropertyDescriptor(target, key);</span><br><span class="line">   </span><br><span class="line">   <span class="hljs-keyword">if</span> (key[<span class="hljs-number">0</span>] === <span class="hljs-string">'_'</span>) &#123;</span><br><span class="line">     desc.enumerable = <span class="hljs-literal">false</span>;</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   <span class="hljs-keyword">return</span> desc;</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(<span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>), handler);</span><br></pre></td></tr></table></figure>
+<h2 id="新的-符号"><a href="#新的-符号" class="headerlink" title="新的(#)符号"></a>新的(#)符号</h2><p>以上的努力都是在Javascript 新的private特性出来所做的尝试，难免繁琐。</p>
+<p>ES2018最新的Privatet特性已经进入了<a href="https://github.com/tc39/proposals" target="_blank" rel="noopener">https://github.com/tc39/proposals</a> stage3, 我们可以一睹芳容</p>
+<figure class="highlight hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>&#123;</span><br><span class="line">  #name;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">constructor</span>(name) &#123;</span><br><span class="line">    this.#name = name;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  get name() &#123;</span><br><span class="line">    return this.#name;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> employee = <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">'anonymous'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">console</span>.log(employee.name)    <span class="hljs-comment">// 'anonymous'</span></span><br><span class="line">console.log(employee.#name)   // undefined</span><br></pre></td></tr></table></figure>
+<p>使用#来描述私有成员，使得Javascript也能像其他高级语言一样实现封装了。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>随着新的特性不断涌现，可以看到Javascript是越趋完善，开发者能够体验越来越丰富的功能以提升开发效率。但是我们依然要感谢前人为了实现这些尚未出现的特性所做出的努力，吃水不忘挖井人。</p>
+<p>以上</p>
+<h2 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h2><ul>
+<li><a href="https://marcusnoble.co.uk/2018-02-04-private-variables-in-javascript/" target="_blank" rel="noopener">private-variables-in-javascript</a></li>
+<li><a href="https://www.sitepoint.com/javascript-private-class-fields/" target="_blank" rel="noopener">javascript-private-class-fields</a></li>
+<li><a href="https://medium.com/@Roger.Jiang/oop-privacy-levels-c1c5a93dd03d" target="_blank" rel="noopener">oop-privacy-levels</a></li>
+<li><a href="https://medium.com/@mnjul/private-class-members-in-es6-a-complete-guide-3d7f83c3af5" target="_blank" rel="noopener">private-class-members-in-es6-a-complete-guide</a></li>
+<li><a href="https://jamie.build/javascripts-new-private-class-fields.html" target="_blank" rel="noopener">javascripts-new-private-class-fields</a></li>
+<li><a href="https://medium.com/@WebReflection/js-classes-got-an-upgrade-747a7c088471" target="_blank" rel="noopener">js-classes-got-an-upgrade</a></li>
+<li><a href="https://tc39.github.io/proposal-class-fields/" target="_blank" rel="noopener">proposal-class-fields</a></li>
+<li><a href="https://itnext.io/fun-with-stamps-episode-21-private-data-in-javascript-4-ways-using-stamps-f43ba93e25bb" target="_blank" rel="noopener">private-data-in-javascript-4-ways-using-stamps</a></li>
+</ul>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>, <a class="has-link-grey -link" href="/tags/语法/">语法</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        <div class="level-start">
+            <a class="level level-item has-link-grey  article-nav-prev" href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/">
+                <i class="level-item fas fa-chevron-left"></i>
+                <span class="level-item">VS Code 高性能的秘密 — Dispose Pattern</span>
+            </a>
+        </div>
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2018/12/28/健康是一/">
+                <span class="level-item">健康是一</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/avator.jpeg" alt="ailuffy">
+                    
+                    <p class="is-size-4 is-block">
+                        ailuffy
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        Debugger
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>杭州 中国</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        6
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        0
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        7
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/AIluffy">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/AIluffy">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 20px;">Javascript</a> <a href="/tags/design-pattern/" style="font-size: 10px;">design pattern</a> <a href="/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/tags/思考/" style="font-size: 10px;">思考</a> <a href="/tags/技术/" style="font-size: 15px;">技术</a> <a href="/tags/语法/" style="font-size: 10px;">语法</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a>
+    </div>
+</div>
+
+    
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/AI.svg" alt="私聊Javascript的Private" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 AI&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+</body>
+</html>

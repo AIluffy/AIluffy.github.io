@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>离线应用技术之——IndexedDB - 蜗牛🐌</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="想要构建离线应用，除了使用service worker，另一个绕不开的话题便是IndexedDB。 IndexedDB是浏览器端的一个基于键值对存储的事务型数据库。为什么要用它，因为想要做到在离线情况下展示数据，数据的持久化是离线应用绕不过去的一个坎。以前使用的是Web SQL，不过它已经被废弃掉了，所以never mind。什么，你说localstorage？确实有很多人会使用localstor">
+<meta name="keywords" content="Javascript,技术">
+<meta property="og:type" content="article">
+<meta property="og:title" content="离线应用技术之——IndexedDB">
+<meta property="og:url" content="https://love2ai.com/2019/04/02/离线应用技术之——IndexedDB/index.html">
+<meta property="og:site_name" content="蜗牛🐌">
+<meta property="og:description" content="想要构建离线应用，除了使用service worker，另一个绕不开的话题便是IndexedDB。 IndexedDB是浏览器端的一个基于键值对存储的事务型数据库。为什么要用它，因为想要做到在离线情况下展示数据，数据的持久化是离线应用绕不过去的一个坎。以前使用的是Web SQL，不过它已经被废弃掉了，所以never mind。什么，你说localstorage？确实有很多人会使用localstor">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://i.stack.imgur.com/zGJPJ.png">
+<meta property="og:image" content="https://haitao.nos.netease.com/22c25240-834c-4676-ae60-215507fce160.png">
+<meta property="og:image" content="https://haitao.nos.netease.com/150121c1-0d43-4758-987a-01505187998a.png">
+<meta property="og:updated_time" content="2019-04-10T07:57:44.149Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="离线应用技术之——IndexedDB">
+<meta name="twitter:description" content="想要构建离线应用，除了使用service worker，另一个绕不开的话题便是IndexedDB。 IndexedDB是浏览器端的一个基于键值对存储的事务型数据库。为什么要用它，因为想要做到在离线情况下展示数据，数据的持久化是离线应用绕不过去的一个坎。以前使用的是Web SQL，不过它已经被废弃掉了，所以never mind。什么，你说localstorage？确实有很多人会使用localstor">
+<meta name="twitter:image" content="https://i.stack.imgur.com/zGJPJ.png">
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/AI.svg" alt="离线应用技术之——IndexedDB" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">文档</a>
+                
+                <a class="navbar-item" href="/categories">种类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    23 分钟 读完 (大约 3411 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                离线应用技术之——IndexedDB
+            
+        </h1>
+        <div class="content">
+            <p>想要构建离线应用，除了使用service worker，另一个绕不开的话题便是IndexedDB。</p>
+<p>IndexedDB是浏览器端的一个基于键值对存储的<strong>事务型</strong>数据库。为什么要用它，因为想要做到在离线情况下展示数据，数据的持久化是离线应用绕不过去的一个坎。以前使用的是Web SQL，不过它已经被废弃掉了，所以never mind。什么，你说localstorage？确实有很多人会使用localstorage来存储数据，但是相比IndexedDB，它存在很大的不足，<a id="more"></a>原因有三：</p>
+<ol>
+<li><p>localstorage 存储有大小限制，限制5MB，不能存储大量数据，尤其是带有结构的数据。</p>
+</li>
+<li><p>没有查询语句，没有schema，基本上没有任何有关数据库的操作。每次的写入和写出都要字符串化和对象化，何其麻烦。所以在处理带结构的大型数据上基本毫无扩展性。</p>
+</li>
+<li><p>最关键的一点是，localstorage的API是同步的，这就意味着它会阻塞DOM操作。并且很多时候，离线应用的数据操作需要在service worker中进行，service worker只接受异步的API，所以相较而言，IndexedDB是更好的选择。</p>
+</li>
+</ol>
+<p>下面这张表摘自<a href="http://www.zhangxinxu.com/wordpress/2017/07/html5-indexeddb-js-example/" target="_blank" rel="noopener">张鑫旭的博文</a>，改装了一下，可以快速了解IndexeDB的一些基础特性。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align:left">IndexedDB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>优点</strong></td>
+<td style="text-align:left">1. 允许对象的快速索引和搜索，因此在Web应用程序场景中，您可以非常快速地管理数据以及读取/写入数据；2. 由于是NoSQL数据库，因此我们可以根据实际需求设定我们的JavaScript对象和索引；3. 在异步模式下工作，每个事务具有适度的粒状锁。这允许您在JavaScript的事件驱动模块内工作。</td>
+</tr>
+<tr>
+<td><strong>不足</strong></td>
+<td style="text-align:left">如果你的世界观里面只有关系型数据库，恐怕不太容易理解。</td>
+</tr>
+<tr>
+<td><strong>位置</strong></td>
+<td style="text-align:left">包含JavaScript对象和键的存储对象。</td>
+</tr>
+<tr>
+<td><strong>查询机制</strong></td>
+<td style="text-align:left">Cursor APIs，Key Range APIs，应用程序代码</td>
+</tr>
+<tr>
+<td><strong>事务</strong></td>
+<td style="text-align:left">锁可以发生在数据库版本变更事务，或是存储对象“只读”和“读写”事务时候。</td>
+</tr>
+<tr>
+<td><strong>事务提交</strong></td>
+<td style="text-align:left">事务创建是显式的。默认是提交，除非我们调用中止或有一个错误没有被捕获。</td>
+</tr>
+</tbody>
+</table>
+<p>也许，上表中说到的一些概念你还不是很懂。嘿，您先别急，先坐下，且听我慢慢给您说。</p>
+<p><strong>Q1</strong>：什么是NoSQL数据库？<br><strong>A1</strong>：非关系型数据库，其中的一大类便是通过键值（key-value）存储数据。IndexedDB便是属于这一类。</p>
+<p><strong>Q2</strong>：什么是事务？<br><strong>A2</strong>：指访问并可能更新数据库中各种数据项的一个程序执行单元(unit)。它有以下四点特性：</p>
+<ul>
+<li>原子性(Atomicity)：事务中的所有操作作为一个整体提交或回滚。</li>
+<li>一致性(Consistemcy)：事物完成时，数据必须是一致的，以保证数据的无损。</li>
+<li>隔离性(Isolation)：对数据进行修改的多个事务是彼此隔离的。</li>
+<li>持久性(Durability)：事务完成之后，它对于系统的影响是永久的，该修改即使出现系统故障也将一直保留。</li>
+</ul>
+<p><strong>Q3</strong>：Cursor是干嘛用的？<br><strong>A3</strong>：cursor即游标，类似于现实中的游标，一个刻度表示一行数据，游标就是尺子上的一片区域，想要获得数据库一行一行的数据，我们可以遍历这个游标就好了。</p>
+<p>前菜上的差不多了，现在进入我们的正餐部分。</p>
+<h3 id="如何使用IndexedDB？"><a href="#如何使用IndexedDB？" class="headerlink" title="如何使用IndexedDB？"></a>如何使用IndexedDB？</h3><p>使用IndexedDB其实还蛮简单的，你只需要做两件事：</p>
+<ol>
+<li><p>创建或打开一个数据库</p>
+</li>
+<li><p>创建一个Object Store对象仓库（它是IndexedDB存储数据的机制，习惯了关系型数据库的同学可以把它想象成一张表）</p>
+</li>
+</ol>
+<p><img src="https://i.stack.imgur.com/zGJPJ.png" alt="IndexedDB"></p>
+<p>遵循上面两步，我们便可以开始愉快的使用IndexedDB了。代码如下：</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// 创建或使用一个数据库</span></span><br><span class="line"><span class="hljs-keyword">const</span> request = <span class="hljs-built_in">window</span>.indexedDB.open(<span class="hljs-string">"todos"</span>, <span class="hljs-number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 创建schema, 如果浏览器没有找到todos数据库，则它会创建一个，同时触发upgradeneeded事件。</span></span><br><span class="line">request.onupgradeneeded = <span class="hljs-function"><span class="hljs-params">event</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="hljs-comment">//db代表的是与数据库的连接</span></span><br><span class="line">  <span class="hljs-keyword">const</span> db = event.target.result;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-comment">//首先检测是否存在我们要创建的Object Store</span></span><br><span class="line">  <span class="hljs-keyword">if</span>(!db.objectStoreNames.contains(<span class="hljs-string">"todo-meta"</span>)) &#123;</span><br><span class="line">    <span class="hljs-comment">//通过createObjectStore方法创建ObjectStore对象来存储对象</span></span><br><span class="line">    <span class="hljs-keyword">const</span> todoStore = db.createObjectStore(<span class="hljs-string">'todo-meta'</span>, &#123;<span class="hljs-attr">keyPath</span>: <span class="hljs-string">'id'</span>&#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="hljs-comment">//使用index来检索数据，createIndex方法接受两个参数，一个代表index的name，一个代表要被indexed的属性</span></span><br><span class="line">    todoStore.createIndex(<span class="hljs-string">'nameIdx'</span>, <span class="hljs-string">'name'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="hljs-keyword">if</span>(!db.objectStoreNames.contains(<span class="hljs-string">"todo-items"</span>)) &#123;</span><br><span class="line">    <span class="hljs-comment">// keyPath也可以传递一个数组，来共同组成可以索引</span></span><br><span class="line">    <span class="hljs-keyword">const</span> itemStore = db.createObjectStore(</span><br><span class="line">        <span class="hljs-string">"todo-items"</span>,</span><br><span class="line">        &#123; <span class="hljs-attr">keyPath</span>: [ <span class="hljs-string">"todoId"</span>, <span class="hljs-string">"row"</span> ] &#125;</span><br><span class="line">    );</span><br><span class="line">    itemStore.createIndex(<span class="hljs-string">"todoIndex"</span>, <span class="hljs-string">"todoId"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">    </span><br><span class="line">  <span class="hljs-keyword">if</span>(!db.objectStoreNames.contains(<span class="hljs-string">"attachments"</span>)) &#123;</span><br><span class="line">    <span class="hljs-comment">// 不传keypath也行，交由数据库自己处理key，适合于一些文件内容的存储。</span></span><br><span class="line">    <span class="hljs-keyword">const</span> fileStore = db.createObjectStore(</span><br><span class="line">        <span class="hljs-string">"attachments"</span>,</span><br><span class="line">        &#123; <span class="hljs-attr">autoIncrement</span>: <span class="hljs-literal">true</span> &#125;</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>好吧，我撒谎了，从代码上看，使用IndexedDB并不是那么简单啊，这还是在我没有考虑兼容性的情况下，而忽略了以下这么一大段代码。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">  <span class="hljs-comment">// In the following line, you should include the prefixes of implementations you want to test.</span></span><br><span class="line"><span class="hljs-built_in">window</span>.indexedDB = <span class="hljs-built_in">window</span>.indexedDB || <span class="hljs-built_in">window</span>.mozIndexedDB || <span class="hljs-built_in">window</span>.webkitIndexedDB || <span class="hljs-built_in">window</span>.msIndexedDB;</span><br><span class="line">  <span class="hljs-comment">// DON'T use "var indexedDB = ..." if you're not in a function.</span></span><br><span class="line">  <span class="hljs-comment">// Moreover, you may need references to some window.IDB* objects:</span></span><br><span class="line"><span class="hljs-built_in">window</span>.IDBTransaction = <span class="hljs-built_in">window</span>.IDBTransaction || <span class="hljs-built_in">window</span>.webkitIDBTransaction || <span class="hljs-built_in">window</span>.msIDBTransaction;</span><br><span class="line"><span class="hljs-built_in">window</span>.IDBKeyRange = <span class="hljs-built_in">window</span>.IDBKeyRange || <span class="hljs-built_in">window</span>.webkitIDBKeyRange || <span class="hljs-built_in">window</span>.msIDBKeyRange;</span><br><span class="line">  <span class="hljs-comment">// (Mozilla has never prefixed these objects, so we don't need window.mozIDB*)</span></span><br></pre></td></tr></table></figure>
+<p>来自中外各大名宿的吐槽，IndexedDB的API是出了名的膈应人。就比如说新建一个数据库，为啥我要给它取名叫request而不是idb之类的。事实上，对IndexedDB来说，新建数据库是一个request请求，用MDN的原话是，<code>IndexedDB uses a lot of requests</code>。通过这些请求，它能够获取到相应的DOM事件，从而判断该操作是成功了还是失败了。同时，这些请求也有readyState，result和errorCode等一系列属性。这怎么看都像是一个XMLHTTPRequest对象，简直不能再坑了。</p>
+<p>吐槽归吐槽，我们还是认真看一下上一段代码做了什么。在连接数据库后，我们通过createObjectStore方法新建了三个对象仓储，第一个参数即为仓储名，第二个参数即为配置项，包含两个属性：1. keyPath，2. autoIncrement。keyPath用于指定对象的键，如果未指定，则对象的创建使用的是out-of-line keys；指定了，则使用in-line keys。至于什么是out-of-line keys和in-line keys，我们通过一图流来进行详细的说明。</p>
+<p><img src="https://haitao.nos.netease.com/22c25240-834c-4676-ae60-215507fce160.png" alt="key"></p>
+<p>可以这么理解，out-of-line keys即为单独生成的一个key，可能需要我们自己指定。而in-line keys则是指定对象的一个属性作为key值，由数据库自动绑定。</p>
+<p>至于autoIncrement属性，可以看成一个key generator，自动生成key值。一般来说，keyPath和autoIncrement属性只要使用一个就够了，如果两个同时使用，表示键名为递增的整数，且对象不得缺少指定属性。</p>
+<p>当然，除了使用key存储对象，也可以为对象指定index。就像上面代码中的createIndex做的那样，我们依然通过一图流来说明key和index的区别。</p>
+<p><img src="https://haitao.nos.netease.com/150121c1-0d43-4758-987a-01505187998a.png" alt="entry"></p>
+<p>可以看到，两者其实是同一份数据，只是由不同的属性索引，当需要检索某一特定属性的数据时，index格外有用。</p>
+<p>下面讲讲如何进行数据库的CRUD操作，毕竟这才是我们真正关心的。</p>
+<p>执行IndexedDB的CRUD操作只需要如下五步：</p>
+<ol>
+<li>与数据库建立连接</li>
+<li>创建一个事务</li>
+<li>指明Object Store</li>
+<li>在该store上执行操作</li>
+<li>清除数据库连接</li>
+</ol>
+<h4 id="1-添加数据"><a href="#1-添加数据" class="headerlink" title="1. 添加数据"></a>1. 添加数据</h4><figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> request = <span class="hljs-built_in">window</span>.indexedDB.open(<span class="hljs-string">"todos"</span>, <span class="hljs-number">1</span>);</span><br><span class="line"></span><br><span class="line">request.onsuccess = <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-keyword">const</span> db = request.result;</span><br><span class="line">    </span><br><span class="line">    <span class="hljs-comment">// db.transaction的第一个参数是一个数组，表明我们希望事务执行操作的ObjectStore列表，通常是只有一个。第二个参数表明事务执行的操作，一般为readonly（只读）和readwrite（读写）</span></span><br><span class="line">    <span class="hljs-keyword">const</span> transaction = db.transaction(</span><br><span class="line">        [ <span class="hljs-string">"todo-meta"</span>, <span class="hljs-string">"todo-items"</span> ],</span><br><span class="line">        <span class="hljs-string">"readwrite"</span></span><br><span class="line">    );</span><br><span class="line">    </span><br><span class="line">   <span class="hljs-comment">// 事务使用的两个store</span></span><br><span class="line">    <span class="hljs-keyword">const</span> metaStore = transaction.objectStore(<span class="hljs-string">"todo-meta"</span>);</span><br><span class="line">    <span class="hljs-keyword">const</span> itemStore = transaction.objectStore(<span class="hljs-string">"todo-items"</span>);</span><br><span class="line">  </span><br><span class="line">    <span class="hljs-comment">// 新增数据</span></span><br><span class="line">    metaStore.add(</span><br><span class="line">        &#123; <span class="hljs-attr">todoDate</span>: <span class="hljs-number">112342392131</span>, <span class="hljs-attr">todoAuthor</span>: <span class="hljs-string">'luffy'</span> &#125;</span><br><span class="line">    );</span><br><span class="line">    </span><br><span class="line">    itemStore.add(&#123;</span><br><span class="line">        todoId: <span class="hljs-number">1</span>,</span><br><span class="line">        row: <span class="hljs-number">1</span>,</span><br><span class="line">        name: <span class="hljs-string">'todo 1'</span>,</span><br><span class="line">        completed: <span class="hljs-literal">false</span></span><br><span class="line">    &#125;);</span><br><span class="line">  </span><br><span class="line">    <span class="hljs-comment">// 清除数据库连接</span></span><br><span class="line">    transaction.oncomplete = <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">        db.close();</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="2-更新数据"><a href="#2-更新数据" class="headerlink" title="2. 更新数据"></a>2. 更新数据</h4><figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// ...如上连接数据库，创建事务</span></span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 这个操作会通过keypath来更新数据，itemStore的keyPath为属性todoId和row的结合，可以看到上个操作新建的todo item的completeed属性被更新为true</span></span><br><span class="line"><span class="hljs-keyword">const</span> itemStore = objectStore.put(&#123;</span><br><span class="line">      todoId: <span class="hljs-number">1</span>,</span><br><span class="line">      row: <span class="hljs-number">1</span>,</span><br><span class="line">      name: <span class="hljs-string">'todo 1'</span>,</span><br><span class="line">      completed: <span class="hljs-literal">true</span></span><br><span class="line">  &#125;);</span><br><span class="line">  </span><br><span class="line"><span class="hljs-comment">// 当然，objectStore.put也可以接受第二个参数，表明对象的键，一般用于out-of-line key的情况。</span></span><br><span class="line">attachmentStore.put(VALUE, KEY);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// ...清除数据库连接</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-删除数据"><a href="#3-删除数据" class="headerlink" title="3. 删除数据"></a>3. 删除数据</h4><figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// ...如上连接数据库，创建事务</span></span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 大概是最简单的API了，指明我们要删除的key就行了</span></span><br><span class="line">itemStore.delete([ <span class="hljs-string">"123"</span>, <span class="hljs-string">"2"</span> ]);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// ...清除数据库连接</span></span><br></pre></td></tr></table></figure>
+<h4 id="4-读取数据"><a href="#4-读取数据" class="headerlink" title="4. 读取数据"></a>4. 读取数据</h4><p>读取操作有那么点不同，因为它会新建一个request，读取数据在request的回调中。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// ...如上连接数据库，创建事务</span></span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 通过监听onsuccess来获取数据，通过键名获取指定数据</span></span><br><span class="line"><span class="hljs-keyword">const</span> getRequest = itemStore.get(<span class="hljs-string">"123"</span>);</span><br><span class="line"><span class="hljs-comment">// 也可以通过getAll方法获取全部数据</span></span><br><span class="line"><span class="hljs-keyword">const</span> getAllRequest = itemStore.getAll();</span><br><span class="line"></span><br><span class="line">getRequest.onsuccess = <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// 获取的数据在request的result属性中</span></span><br><span class="line">    <span class="hljs-built_in">console</span>.log(getRequest.result);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="5-遍历数据"><a href="#5-遍历数据" class="headerlink" title="5. 遍历数据"></a>5. 遍历数据</h4><p>get()和getAll()可以获取单个数据或全部数据，但如果想进行更精细的读取操作，比如读取3-20范围的数据，则需要用到cursor及IDBKeyRange两个对象了。</p>
+<p>索引的有用之处，在于可以指定读取数据的范围</p>
+<p>IDBKeyRange对象的作用则是生成一个表示范围的Range对象。它的生成方法有四种</p>
+<blockquote>
+<p>lowerBound方法：指定范围的下限。<br>upperBound方法：指定范围的上限。<br>bound方法：指定范围的上下限。<br>only方法：指定范围中只有一个值。</p>
+</blockquote>
+<p>下面的代码直接摘自<a href="http://javascript.ruanyifeng.com/bom/indexeddb.html" target="_blank" rel="noopener">阮一峰老师的文章</a>，仅供参考</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// All keys ≤ x	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r1 = IDBKeyRange.upperBound(x);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys &lt; x	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r2 = IDBKeyRange.upperBound(x, <span class="hljs-literal">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys ≥ y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r3 = IDBKeyRange.lowerBound(y);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys &gt; y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r4 = IDBKeyRange.lowerBound(y, <span class="hljs-literal">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys ≥ x &amp;&amp; ≤ y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r5 = IDBKeyRange.bound(x, y);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys &gt; x &amp;&amp;&lt; y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r6 = IDBKeyRange.bound(x, y, <span class="hljs-literal">true</span>, <span class="hljs-literal">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys &gt; x &amp;&amp; ≤ y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r7 = IDBKeyRange.bound(x, y, <span class="hljs-literal">true</span>, <span class="hljs-literal">false</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// All keys ≥ x &amp;&amp;&lt; y	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r8 = IDBKeyRange.bound(x, y, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// The key = z	</span></span><br><span class="line"><span class="hljs-keyword">var</span> r9 = IDBKeyRange.only(z);</span><br></pre></td></tr></table></figure>
+<p>通过IDBKeyRange，结合cursor，便可以实现在一定范围内读取数据的操作了。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// 想要遍历数据，就要openCursor方法，它在当前对象仓库里面建立一个读取光标（cursor）</span></span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 绑定range</span></span><br><span class="line"><span class="hljs-keyword">var</span> range = IDBKeyRange.bound(<span class="hljs-string">'3'</span>, <span class="hljs-string">'20'</span>);</span><br><span class="line"></span><br><span class="line"><span class="hljs-keyword">const</span> cursor = db.trasaction([<span class="hljs-string">'todo-item'</span>], <span class="hljs-string">'readOnly'</span>).objectStore(<span class="hljs-string">'todo-item'</span>).openCursor(range);</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">//回调函数接受一个事件对象作为参数，该对象的target.result属性指向当前数据对象。当前数据对象的key和value分别返回键名和键值（即实际存入的数据）。continue方法将光标移到下一个数据对象，如果当前数据对象已经是最后一个数据了，则光标指向null。</span></span><br><span class="line"></span><br><span class="line">cursor.onsuccess = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">e</span>) </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">var</span> res = e.target.result;</span><br><span class="line">    <span class="hljs-keyword">if</span>(res) &#123;</span><br><span class="line">        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Key"</span>, res.key);</span><br><span class="line">        <span class="hljs-built_in">console</span>.dir(<span class="hljs-string">"Data"</span>, res.value);</span><br><span class="line">        res.continue();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>终于把IndexedDB的API给走了一遍，基本上涵盖了我们日常开发的大部分操作，当然还有一部分API可以直接从<a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank" rel="noopener">MDN</a>上查阅。可以看到，这些API不可谓不繁琐，如果直接使用这些API，估计你们不是累死就是被气死。</p>
+<p>正所谓哪里有压迫哪里就有反抗，我们的<a href="https://twitter.com/jaffathecake" target="_blank" rel="noopener">Jake Archibald</a>大神在官方的基础上封装了一个Promise风格的库–<a href="https://github.com/jakearchibald/idb" target="_blank" rel="noopener">idb</a>，可以方便开发者们按照现代JavaScript的方式使用IndexedDB。这里有<a href="https://medium.freecodecamp.org/a-quick-but-complete-guide-to-indexeddb-25f030425501" target="_blank" rel="noopener">一篇文章</a>便是基于这个库来介绍IndexedDB的，写的相当不错。</p>
+<p>下面这行代码大概展示了使用idb来写出promise及async风格的代码，来源于<a href="https://medium.com/@filipvitas/indexeddb-with-promises-and-async-await-3d047dddd313" target="_blank" rel="noopener">medium</a>。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getAllData</span>(<span class="hljs-params"></span>) </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">let</span> db = <span class="hljs-keyword">await</span> idb.open(<span class="hljs-string">'db-name'</span>, <span class="hljs-number">1</span>)</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">let</span> tx = db.transaction(<span class="hljs-string">'objectStoreName'</span>, <span class="hljs-string">'readonly'</span>)</span><br><span class="line">    <span class="hljs-keyword">let</span> store = tx.objectStore(<span class="hljs-string">'objectStoreName'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="hljs-comment">// add, clear, count, delete, get, getAll, getAllKeys, getKey, put</span></span><br><span class="line">    <span class="hljs-keyword">let</span> allSavedItems = <span class="hljs-keyword">await</span> store.getAll()</span><br><span class="line"></span><br><span class="line">    <span class="hljs-built_in">console</span>.log(allSavedItems)</span><br><span class="line"></span><br><span class="line">    db.close()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>感兴趣的同学也可以看看这个简单的使用idb实现的<a href="https://github.com/AIluffy/todo-list-indexeddb" target="_blank" rel="noopener">todoList</a>。</p>
+<p>以上，XD。</p>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>, <a class="has-link-grey -link" href="/tags/技术/">技术</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        <div class="level-start">
+            <a class="level level-item has-link-grey  article-nav-prev" href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/">
+                <i class="level-item fas fa-chevron-left"></i>
+                <span class="level-item">Promise.prototype.finally &amp; Promise.prototype.done小探</span>
+            </a>
+        </div>
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/">
+                <span class="level-item">VS Code 高性能的秘密 — Dispose Pattern</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/avator.jpeg" alt="ailuffy">
+                    
+                    <p class="is-size-4 is-block">
+                        ailuffy
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        Debugger
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>杭州 中国</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        6
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        0
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        7
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/AIluffy">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/AIluffy">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 20px;">Javascript</a> <a href="/tags/design-pattern/" style="font-size: 10px;">design pattern</a> <a href="/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/tags/思考/" style="font-size: 10px;">思考</a> <a href="/tags/技术/" style="font-size: 15px;">技术</a> <a href="/tags/语法/" style="font-size: 10px;">语法</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a>
+    </div>
+</div>
+
+    
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/AI.svg" alt="离线应用技术之——IndexedDB" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 AI&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+</body>
+</html>

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>VS Code 高性能的秘密 — Dispose Pattern - 蜗牛🐌</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="VS Code 是微软出品的新一代轻量级编辑器，一出道便以简洁大气的界面、卓越的性能、以及灵活的可扩展性吸引了大批的拥趸。  插件化是 VS Code 的精髓，大部分功能比如 command、key binding、context menu 都是通过它对外提供的一套扩展API实现并集成到 Code 中。">
+<meta name="keywords" content="vscode,design pattern">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VS Code 高性能的秘密 — Dispose Pattern">
+<meta property="og:url" content="https://love2ai.com/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/index.html">
+<meta property="og:site_name" content="蜗牛🐌">
+<meta property="og:description" content="VS Code 是微软出品的新一代轻量级编辑器，一出道便以简洁大气的界面、卓越的性能、以及灵活的可扩展性吸引了大批的拥趸。  插件化是 VS Code 的精髓，大部分功能比如 command、key binding、context menu 都是通过它对外提供的一套扩展API实现并集成到 Code 中。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://haitao.nos.netease.com/2b129013-9a04-467f-8b46-b0ebe43b5fea_225_224.png">
+<meta property="og:image" content="https://static001.geekbang.org/resource/image/d9/9b/d94bcbb1ff5e097660a9262cf485039b.png">
+<meta property="og:image" content="https://haitao.nos.netease.com/94397bbc-f94b-4015-a7c2-ec53cf71e197_589_311.jpg">
+<meta property="og:image" content="https://haitao.nos.netease.com/0a050e4d-f7f2-417d-9505-98c33bda36df_401_416.jpg">
+<meta property="og:updated_time" content="2019-04-10T07:57:44.149Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="VS Code 高性能的秘密 — Dispose Pattern">
+<meta name="twitter:description" content="VS Code 是微软出品的新一代轻量级编辑器，一出道便以简洁大气的界面、卓越的性能、以及灵活的可扩展性吸引了大批的拥趸。  插件化是 VS Code 的精髓，大部分功能比如 command、key binding、context menu 都是通过它对外提供的一套扩展API实现并集成到 Code 中。">
+<meta name="twitter:image" content="https://haitao.nos.netease.com/2b129013-9a04-467f-8b46-b0ebe43b5fea_225_224.png">
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/AI.svg" alt="VS Code 高性能的秘密 — Dispose Pattern" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">文档</a>
+                
+                <a class="navbar-item" href="/categories">种类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    10 分钟 读完 (大约 1467 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                VS Code 高性能的秘密 — Dispose Pattern
+            
+        </h1>
+        <div class="content">
+            <p>VS Code 是微软出品的新一代轻量级编辑器，一出道便以简洁大气的界面、卓越的性能、以及灵活的可扩展性吸引了大批的拥趸。</p>
+<p><img src="https://haitao.nos.netease.com/2b129013-9a04-467f-8b46-b0ebe43b5fea_225_224.png" alt="VS Code Icon"></p>
+<p>插件化是 VS Code 的精髓，大部分功能比如 command、key binding、context menu 都是通过它对外提供的一套扩展<a href="https://code.visualstudio.com/api" target="_blank" rel="noopener">API</a>实现并集成到 Code 中。 <a id="more"></a> VS Code 使用多进程的架构来分别处理编辑器的渲染与执行，每开一个窗口，便会为该窗口创建一个进程执行插件，该进程即为 Extension Host。Extension Host 按需激活插件，同一时间内，插件代码可能被运行多次。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d9/9b/d94bcbb1ff5e097660a9262cf485039b.png" alt="VS Code Architectur"></p>
+<p>为了保证插件的高效运行，VS Code 使用了 Dispose 模式，大部分插件 API 都实现了 IDisposable 接口，生成的对象则会拥有一个 dispose 函数属性。</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">interface IDisposable &#123;</span><br><span class="line">truedispose(): <span class="hljs-keyword">void</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Dispose 模式主要用来资源管理，资源比如内存被对象占用，则会通过调用方法来释放，这些方法通常被命名为‘close’，‘dispose’，‘free’，‘release’。一个著名的例子便是 C#，C#通过 Dipose Pattern 来释放不受 CLR(Common Language Runtime)管理的非托管资源。</p>
+<p>VS Code 是由 Javascript 实现的，众所周知，Javascript 的内存分配是通过 GC(garbage collector)进行管理，大部分情况下它都是自动执行且对用户不可见的。然而这种自动化的管理方式却存在一个潜在的问题，就是 Javascript 开发者会错误的认为他们不需要再关心内存管理了，从而再无意间书写一些不利于内存回收的代码。</p>
+<p>所以，最清楚被分配的内存在未来是否需要使用的还是开发者，但是每次使用完一个对象后就手动的将其销毁，这样的做法即不高效，也不可靠。正因为此，VS Code 使用了 Dispose Pattern 来管理对象销毁。当扩展功能执行时，Extension Host 会在正确的时机调用 dispose 方法，销毁 Code 生成的对象，减少内存使用。比如说，方法‘setStatusBarMessage(value: string)’返回一个‘Disposable’对象，当调用 dispose 方法的时候会移除掉信息对象。</p>
+<p><img src="https://haitao.nos.netease.com/94397bbc-f94b-4015-a7c2-ec53cf71e197_589_311.jpg" alt="Dispose Pattern"></p>
+<p>Dispose pattern 的实现如下</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">// 第一个重载参数是单个disposable类型</span></span><br><span class="line"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dispose</span>&lt;<span class="hljs-title">T</span> <span class="hljs-title">extends</span> <span class="hljs-title">IDisposable</span>&gt;(<span class="hljs-params">disposable: T</span>): <span class="hljs-title">T</span>;</span></span><br><span class="line"><span class="hljs-function">// 第二个重载参数是多个<span class="hljs-title">disposable</span>类型传参数，参数可能为<span class="hljs-title">undefined</span>。</span></span><br><span class="line">function dispose&lt;T extends IDisposable&gt;(...disposables: Array&lt;T | undefined&gt;): T[];</span><br><span class="line"><span class="hljs-comment">// 第三个重载参数是一个disposable类型的数组。</span></span><br><span class="line">function dispose&lt;T extends IDisposable&gt;(disposables: T[]): T[];</span><br><span class="line"><span class="hljs-comment">// 第三个重载参数为两种，第一个是disposable类型或disposable数组类型，剩余的为disposable类型。</span></span><br><span class="line">function dispose&lt;T extends IDisposable&gt;(first: T | T[], ...rest: T[]): T | T[] | undefined &#123;</span><br><span class="line">  <span class="hljs-comment">// 如果第一个参数是数组，则依次调用传参数的dispose方法</span></span><br><span class="line">  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">Array</span>.isArray(first)) &#123;</span><br><span class="line">  	first.forEach(<span class="hljs-function"><span class="hljs-params">d</span> =&gt;</span> d &amp;&amp; d.dispose());</span><br><span class="line">  	<span class="hljs-comment">// 返回空的数组</span></span><br><span class="line">  	<span class="hljs-keyword">return</span> [];</span><br><span class="line">  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (rest.length === <span class="hljs-number">0</span>) &#123;</span><br><span class="line">   <span class="hljs-comment">// 如果没有没有剩余参数</span></span><br><span class="line">  	<span class="hljs-keyword">if</span> (first) &#123;</span><br><span class="line">  	   <span class="hljs-comment">// 如果存在first</span></span><br><span class="line">  	   <span class="hljs-comment">// 调用第一个dispose</span></span><br><span class="line">  		first.dispose();</span><br><span class="line">  	  <span class="hljs-comment">// 返回first</span></span><br><span class="line">  		<span class="hljs-keyword">return</span> first;</span><br><span class="line">  	&#125;</span><br><span class="line"></span><br><span class="line">  	<span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;</span><br><span class="line">  &#125; <span class="hljs-keyword">else</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// first不是数组，且rest长度不为0</span></span><br><span class="line">  	dispose(first);</span><br><span class="line">  	dispose(rest);</span><br><span class="line"></span><br><span class="line">  	<span class="hljs-comment">// 返回空数组</span></span><br><span class="line">  	<span class="hljs-keyword">return</span> [];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// implement IDisposable 的Disposable 抽象类</span></span><br><span class="line">abstract <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Disposable</span> <span class="hljs-title">implements</span> <span class="hljs-title">IDisposable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-comment">// Disposable类的静态对象，用于返回一个包含空的dispose方法的IDisposable对象。dispose被执行了，则表示该对象不再需要了。</span></span><br><span class="line">  <span class="hljs-comment">// 部分基础API使用了该对象，用于标志资源释放。</span></span><br><span class="line">true<span class="hljs-keyword">static</span> None = <span class="hljs-built_in">Object</span>.freeze&lt;IDisposable&gt;(&#123; dispose() &#123; &#125; &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="hljs-comment">// protected属性toDispose返回protected对象_toDispose, 该对象初始值是一个空的数组。</span></span><br><span class="line">trueprotected _toDispose: IDisposable[] = [];</span><br><span class="line">true<span class="hljs-comment">// 返回IDisposable数组。</span></span><br><span class="line">trueprotected get toDispose(): IDisposable[] &#123; <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._toDispose; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-comment">// 设置状态标志，表示该对象是否有被销毁。</span></span><br><span class="line">trueprivate _lifecycle_disposable_isDisposed = <span class="hljs-literal">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-comment">// 暴露公共方法dispose，执行完后将_lifecycle_disposable_isDisposed状态标志设为true，同时调用lifecycle内的dispose方法处理_toDispose数组，并重新赋值空数组。</span></span><br><span class="line">truepublic dispose(): <span class="hljs-keyword">void</span> &#123;</span><br><span class="line">truetrue<span class="hljs-keyword">this</span>._lifecycle_disposable_isDisposed = <span class="hljs-literal">true</span>;</span><br><span class="line">truetrue<span class="hljs-keyword">this</span>._toDispose = dispose(<span class="hljs-keyword">this</span>._toDispose);</span><br><span class="line">true&#125;</span><br><span class="line"></span><br><span class="line">  <span class="hljs-comment">// 内部方法注册实例，若_lifecycle_disposable_isDisposed为true，则表明该方法已经被dispose过，则不能再使用，需dispose掉，否则，推入_toDispose数组。</span></span><br><span class="line">trueprotected _register&lt;T extends IDisposable&gt;(t: T): T &#123;</span><br><span class="line">true  <span class="hljs-comment">// 判断这个对象有没有被dispose过</span></span><br><span class="line">truetrue<span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>._lifecycle_disposable_isDisposed) &#123;</span><br><span class="line">truetruetrue<span class="hljs-built_in">console</span>.warn(<span class="hljs-string">'Registering disposable on object that has already been disposed.'</span>);</span><br><span class="line">truetruetruet.dispose();</span><br><span class="line">truetrue&#125; <span class="hljs-keyword">else</span> &#123;</span><br><span class="line">truetruetrue<span class="hljs-keyword">this</span>._toDispose.push(t);</span><br><span class="line">truetrue&#125;</span><br><span class="line"></span><br><span class="line">truetrue<span class="hljs-keyword">return</span> t;</span><br><span class="line">true&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>扩展 API 大部分功能类或功能方法都通过上面的抽象类 Disposable 或接口 IDisposable 实现 dispose 方法。下面的函数示例了一个功能类 DelayedDragHandler 如何实现 dispose 方法，当 HTMLElement 的延迟拖动方法执行完后，其实例对象的 timeout 对象会被及时清除，避免内存占用。</p>
+<p><img src="https://haitao.nos.netease.com/0a050e4d-f7f2-417d-9505-98c33bda36df_401_416.jpg" alt="dispose object"></p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-comment">/**</span></span><br><span class="line"><span class="hljs-comment"> * A helper that will execute a provided function when the provided HTMLElement receives</span></span><br><span class="line"><span class="hljs-comment"> *  dragover event for 800ms. If the drag is aborted before, the callback will not be triggered.</span></span><br><span class="line"><span class="hljs-comment"> */</span></span><br><span class="line"><span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DelayedDragHandler</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Disposable</span> </span>&#123;</span><br><span class="line">trueprivate timeout: any;</span><br><span class="line"></span><br><span class="line">true<span class="hljs-keyword">constructor</span>(container: HTMLElement, callback: () =&gt; void) &#123;</span><br><span class="line">truetrue<span class="hljs-keyword">super</span>();</span><br><span class="line"></span><br><span class="line">truetrue<span class="hljs-keyword">this</span>._register(addDisposableListener(container, <span class="hljs-string">'dragover'</span>, () =&gt; &#123;</span><br><span class="line">truetruetrue<span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.timeout) &#123;</span><br><span class="line">truetruetruetrue<span class="hljs-keyword">this</span>.timeout = setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">truetruetruetruetruecallback();</span><br><span class="line"></span><br><span class="line">truetruetruetruetrue<span class="hljs-keyword">this</span>.timeout = <span class="hljs-literal">null</span>;</span><br><span class="line">truetruetruetrue&#125;, <span class="hljs-number">800</span>);</span><br><span class="line">truetruetrue&#125;</span><br><span class="line">truetrue&#125;));</span><br><span class="line">true&#125;</span><br><span class="line"></span><br><span class="line">trueprivate clearDragTimeout(): <span class="hljs-keyword">void</span> &#123;</span><br><span class="line">truetrue<span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.timeout) &#123;</span><br><span class="line">truetruetrueclearTimeout(<span class="hljs-keyword">this</span>.timeout);</span><br><span class="line">truetruetrue<span class="hljs-keyword">this</span>.timeout = <span class="hljs-literal">null</span>;</span><br><span class="line">truetrue&#125;</span><br><span class="line">true&#125;</span><br><span class="line"></span><br><span class="line">truedispose(): <span class="hljs-keyword">void</span> &#123;</span><br><span class="line">truetrue<span class="hljs-keyword">super</span>.dispose();</span><br><span class="line"></span><br><span class="line">truetrue<span class="hljs-keyword">this</span>.clearDragTimeout();</span><br><span class="line">true&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>引用：</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Dispose_pattern" target="_blank" rel="noopener">Dispose Pattern</a></li>
+<li><a href="https://wizardforcel.gitbooks.io/effective-csharp/content/19.html" target="_blank" rel="noopener">实现标准的 Dispose 模式</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management#Mark-and-sweep_algorithm" target="_blank" rel="noopener">Memory Management</a></li>
+<li><a href="https://javascript.info/garbage-collection" target="_blank" rel="noopener">Garbage collection</a></li>
+<li><a href="https://github.com/lrlna/sketchin/blob/master/guides/garbage-collection-in-v8.md#-sourcesjs" target="_blank" rel="noopener">Garbage collection in V8, an illustrated guide</a></li>
+<li><a href="https://code.visualstudio.com/api" target="_blank" rel="noopener">API</a></li>
+</ul>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/design-pattern/">design pattern</a>, <a class="has-link-grey -link" href="/tags/vscode/">vscode</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        <div class="level-start">
+            <a class="level level-item has-link-grey  article-nav-prev" href="/2019/04/02/离线应用技术之——IndexedDB/">
+                <i class="level-item fas fa-chevron-left"></i>
+                <span class="level-item">离线应用技术之——IndexedDB</span>
+            </a>
+        </div>
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/03/06/私聊Javascript的Private/">
+                <span class="level-item">私聊Javascript的Private</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/avator.jpeg" alt="ailuffy">
+                    
+                    <p class="is-size-4 is-block">
+                        ailuffy
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        Debugger
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>杭州 中国</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        6
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        0
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        7
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/AIluffy">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/AIluffy">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 20px;">Javascript</a> <a href="/tags/design-pattern/" style="font-size: 10px;">design pattern</a> <a href="/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/tags/思考/" style="font-size: 10px;">思考</a> <a href="/tags/技术/" style="font-size: 15px;">技术</a> <a href="/tags/语法/" style="font-size: 10px;">语法</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a>
+    </div>
+</div>
+
+    
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/AI.svg" alt="VS Code 高性能的秘密 — Dispose Pattern" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 AI&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+</body>
+</html>

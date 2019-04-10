@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>Promise.prototype.finally &amp; Promise.prototype.done小探 - 蜗牛🐌</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="Promise 已经像血液一样融入到我们的日常工作中，thenable 无时无刻不在发挥着它的作用。网络上关于 Promise 的文章也是汗牛充栋，人们一遍又一遍的咀嚼着 Promise.prototype.then, Promise.prototype.catch 的作用和功效。 很多时候，我们的执行函数会是 p.then(onFulfilled).catch(onRejected)这种形式，">
+<meta name="keywords" content="Javascript,技术">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Promise.prototype.finally &amp; Promise.prototype.done小探">
+<meta property="og:url" content="https://love2ai.com/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/index.html">
+<meta property="og:site_name" content="蜗牛🐌">
+<meta property="og:description" content="Promise 已经像血液一样融入到我们的日常工作中，thenable 无时无刻不在发挥着它的作用。网络上关于 Promise 的文章也是汗牛充栋，人们一遍又一遍的咀嚼着 Promise.prototype.then, Promise.prototype.catch 的作用和功效。 很多时候，我们的执行函数会是 p.then(onFulfilled).catch(onRejected)这种形式，">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-04-10T07:57:44.149Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Promise.prototype.finally &amp; Promise.prototype.done小探">
+<meta name="twitter:description" content="Promise 已经像血液一样融入到我们的日常工作中，thenable 无时无刻不在发挥着它的作用。网络上关于 Promise 的文章也是汗牛充栋，人们一遍又一遍的咀嚼着 Promise.prototype.then, Promise.prototype.catch 的作用和功效。 很多时候，我们的执行函数会是 p.then(onFulfilled).catch(onRejected)这种形式，">
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/AI.svg" alt="Promise.prototype.finally &amp; Promise.prototype.done小探" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">文档</a>
+                
+                <a class="navbar-item" href="/categories">种类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    9 分钟 读完 (大约 1299 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                Promise.prototype.finally &amp; Promise.prototype.done小探
+            
+        </h1>
+        <div class="content">
+            <p>Promise 已经像血液一样融入到我们的日常工作中，thenable 无时无刻不在发挥着它的作用。网络上关于 Promise 的文章也是汗牛充栋，人们一遍又一遍的咀嚼着 Promise.prototype.then, Promise.prototype.catch 的作用和功效。</p>
+<p>很多时候，我们的执行函数会是 p.then(onFulfilled).catch(onRejected)这种形式，<a id="more"></a> 并不会链接太多操作，这有点像 try 语句。</p>
+<p>有时候，我们希望一个操作，无论是否抛出异常都会执行，即不管它进入了 resolve，还是 reject，下一步操作都会执行。比如我们发送请求之前会出现一个 loading 图，当我们请求发送完成之后，不管请求有没有出错，我们都希望关掉这个 loading 图以提升用户体验。过去我们可以这么做：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">true</span></span><br><span class="line"></span><br><span class="line">request()</span><br><span class="line">  .then(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// do something</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">false</span></span><br><span class="line">  &#125;)</span><br><span class="line">  .catch(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// log err</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">false</span></span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure>
+<p>这种写法一点也不 DRY，显得丑陋。为了让代码稍微好看一点，我们也可以这么写：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">true</span></span><br><span class="line"></span><br><span class="line">request()</span><br><span class="line">  .then(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// do something</span></span><br><span class="line">  &#125;)</span><br><span class="line">  .catch(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// log err</span></span><br><span class="line">  &#125;)</span><br><span class="line">  .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">false</span></span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure>
+<p>这么写虽然让我们舒服了点，但是，总感觉哪里怪怪的，总觉得.then 后面还有.catch。作为类比，我们可以看一下 try 语句的三种声明形式：</p>
+<ol>
+<li>Try…catch</li>
+<li>Try…finally</li>
+<li>Try…catch…finally</li>
+</ol>
+<p>那么问题来了，为什么 Promise 没有实现 finally 的写法，用于在任何情况下（不论成功或者失败）执行特定后续操作。这样在语义上，代码显得更加直观与合理。</p>
+<p>好消息是，Promise.prototype.finally 已于 2018/01/24 进入 ES8 的 stage4 阶段。半数以上的浏览器也做出了兼容。我们现在就可以尝鲜使用了。</p>
+<p>于是上面的例子就变成了这样：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">true</span></span><br><span class="line"></span><br><span class="line">request()</span><br><span class="line">  .then(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// do something</span></span><br><span class="line">  &#125;)</span><br><span class="line">  .catch(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-comment">// log err</span></span><br><span class="line">  &#125;)</span><br><span class="line">  .finally(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>.loading = <span class="hljs-literal">false</span></span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure>
+<p>看起来好像也没有什么区别，但其实使用 Promise.finally(onFinally) 和 Promise.then(onFulfilled, onRejected)还是有以下几点不同：</p>
+<ol>
+<li>调用内联函数时，不需要多次声明该函数或为该函数创建一个变量保存它。</li>
+<li>由于无法知道 promise 的最终状态，所以 finally 的回调函数中不接收任何参数，它仅用于无论最终结果如何都要执行的情况。</li>
+<li>与 Promise.resolve(2).then(() =&gt; {}, () =&gt; {}) （resolved 的结果为 undefined）不同，Promise.resolve(2).finally(() =&gt; {}) resolved 的结果为 2。</li>
+<li>同样，Promise.reject(3).then(() =&gt; {}, () =&gt; {}) (resolved 的结果为 undefined), Promise.reject(3).finally(() =&gt; {}) rejected 的结果为 3。</li>
+</ol>
+<p>1、2 两点容易理解，至于 3、4，可以通过下面的两个例子进行说明：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-built_in">Promise</span>.resolve(<span class="hljs-string">'foo'</span>).</span><br><span class="line">  <span class="hljs-keyword">finally</span>(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-string">'bar'</span>).</span><br><span class="line">  then(<span class="hljs-function"><span class="hljs-params">res</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(res));</span><br><span class="line"></span><br><span class="line"><span class="hljs-built_in">Promise</span>.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'foo'</span>)).</span><br><span class="line">  <span class="hljs-keyword">finally</span>(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-string">'bar'</span>).</span><br><span class="line">  <span class="hljs-keyword">catch</span>(<span class="hljs-function"><span class="hljs-params">err</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(err.message));</span><br><span class="line"></span><br><span class="line"><span class="hljs-comment">// 最终打印的是‘foo’而不是‘bar'，因为finally()会透传fullfilled的值和rejected错误</span></span><br></pre></td></tr></table></figure>
+<p>如果浏览器没有实现 finally，那么可以实现 polyfill：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Promise</span>.prototype.finally !== <span class="hljs-string">'function'</span>) &#123;</span><br><span class="line">  <span class="hljs-built_in">Promise</span>.prototype.finally = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">onFinally</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.then(</span><br><span class="line">      <span class="hljs-comment">/* onFulfilled */</span></span><br><span class="line">      res =&gt; <span class="hljs-built_in">Promise</span>.resolve(onFinally()).then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> res),</span><br><span class="line">      <span class="hljs-comment">/* onRejected */</span></span><br><span class="line">      err =&gt; <span class="hljs-built_in">Promise</span>.resolve(onFinally()).then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> &#123; <span class="hljs-keyword">throw</span> err; &#125;)</span><br><span class="line">    );</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过该 polyfill，可以更加理解为什么 finally()会透传 fullfilled 的值和 rejected 错误。</p>
+<p>Promise.prototype.finally()会返回一个 promise 对象，Promise chain 会延续下去。但是如果我们不想这条 Promise chain 继续执行下去，而想在执行一个操作后关闭 Promise chain。这种时候就需要用到 Promise.prototype.done().</p>
+<p>Promise.prototype.done 的使用方法和 then 一样，但是该方法不会返回 Promise 对象。</p>
+<p>实现 Promise.prototype.done 的 polyfill 如下：</p>
+<figure class="highlight js hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Promise</span>.prototype.done === <span class="hljs-string">'undefined'</span>) &#123;</span><br><span class="line">    <span class="hljs-built_in">Promise</span>.prototype.done = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">onFulfilled, onRejected</span>) </span>&#123;</span><br><span class="line">        <span class="hljs-keyword">this</span>.then(onFulfilled, onRejected).catch(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">error</span>) </span>&#123;</span><br><span class="line">            setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>&#123;</span><br><span class="line">                <span class="hljs-keyword">throw</span> error;</span><br><span class="line">            &#125;, <span class="hljs-number">0</span>);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，Promise.prototype.done 和 Promise.prototype.finally 存在两点不同：</p>
+<ol>
+<li>done 并不返回 promise 对象，也就是说，在 done 之后不能使用 then，catch 等方法组成方法链。</li>
+<li>done 中发送的异常会被直接抛给外部，也就是说，其不会进行 Promise 的错误处理（Error Handling）</li>
+</ol>
+<blockquote>
+<p>由于 Promise 的 try-catch 机制，出错的问题可能会被内部消化掉。 如果在调用的时候每次都无遗漏的进行 catch 处理的话当然最好了，但是如果在实现的过程中出现了这个例子中的错误的话，那么进行错误排除的工作也会变得困难。这种错误被内部消化的问题也被称为 unhandled rejection ，从字面上看就是在 Rejected 时没有找到相应处理的意思。 - promise 迷你书</p>
+</blockquote>
+<p>以上便是 Promise.prototype.finally 和 Promise.prototype.done 的介绍和说明，也许实际使用的频率不会很高，但是为了高可读的代码，大家不妨一试。 (ゝ ∀･)</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ul>
+<li><a href="http://liubin.org/promises-book/#promise-done" target="_blank" rel="noopener">promise 迷你书</a></li>
+<li><a href="https://github.com/tc39/proposal-promise-finally" target="_blank" rel="noopener">proposal-promise-finally</a></li>
+<li><a href="http://thecodebarbarian.com/using-promise-finally-in-node-js.html" target="_blank" rel="noopener">using-promise-finally-in-node-js.html</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Promise/finally" target="_blank" rel="noopener">MDN</a></li>
+</ul>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>, <a class="has-link-grey -link" href="/tags/技术/">技术</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/04/02/离线应用技术之——IndexedDB/">
+                <span class="level-item">离线应用技术之——IndexedDB</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/avator.jpeg" alt="ailuffy">
+                    
+                    <p class="is-size-4 is-block">
+                        ailuffy
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        Debugger
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>杭州 中国</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        6
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        0
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        7
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/AIluffy">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/AIluffy">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 20px;">Javascript</a> <a href="/tags/design-pattern/" style="font-size: 10px;">design pattern</a> <a href="/tags/vscode/" style="font-size: 10px;">vscode</a> <a href="/tags/思考/" style="font-size: 10px;">思考</a> <a href="/tags/技术/" style="font-size: 15px;">技术</a> <a href="/tags/语法/" style="font-size: 10px;">语法</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a>
+    </div>
+</div>
+
+    
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5167ae40-651b-4ddf-be8e-bb5f57d26388_1600_898.png" alt="Promise.prototype.finally &amp; Promise.prototype.done小探">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-10T15:52:47.000Z">2019-04-10</time></div>
+                    <a href="/2019/04/10/Promise.prototype.finally & Promise.prototype.done小探/" class="has-link-black-ter is-size-6">Promise.prototype.finally &amp; Promise.prototype.done小探</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/5b301ea4-84b2-4ec8-8d4f-2644bf4643b8_600_300.jpg" alt="离线应用技术之——IndexedDB">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-04-02T14:22:04.000Z">2019-04-02</time></div>
+                    <a href="/2019/04/02/离线应用技术之——IndexedDB/" class="has-link-black-ter is-size-6">离线应用技术之——IndexedDB</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/022f0fd9-d1ee-4a2e-8372-5da19adf1238_225_224.png" alt="VS Code 高性能的秘密 — Dispose Pattern">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-18T19:23:40.000Z">2019-03-18</time></div>
+                    <a href="/2019/03/18/VS Code 高性能的秘密 — Dispose Pattern/" class="has-link-black-ter is-size-6">VS Code 高性能的秘密 — Dispose Pattern</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/03/06/私聊Javascript的Private/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="https://haitao.nos.netease.com/238ee644-be1b-4932-b1cb-88a9d85e7e15.png" alt="私聊Javascript的Private">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-03-06T19:50:57.000Z">2019-03-06</time></div>
+                    <a href="/2019/03/06/私聊Javascript的Private/" class="has-link-black-ter is-size-6">私聊Javascript的Private</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2018/12/28/健康是一/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/heart.jpeg" alt="健康是一">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-12-28T11:12:35.000Z">2018-12-28</time></div>
+                    <a href="/2018/12/28/健康是一/" class="has-link-black-ter is-size-6">健康是一</a>
+                    <p class="is-size-7 is-uppercase">
+                        
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Javascript/">
+                        <span class="level-start">
+                            <span class="level-item">Javascript</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">3</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/design-pattern/">
+                        <span class="level-start">
+                            <span class="level-item">design pattern</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/vscode/">
+                        <span class="level-start">
+                            <span class="level-item">vscode</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/思考/">
+                        <span class="level-start">
+                            <span class="level-item">思考</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/语法/">
+                        <span class="level-start">
+                            <span class="level-item">语法</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/随笔/">
+                        <span class="level-start">
+                            <span class="level-item">随笔</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/AI.svg" alt="Promise.prototype.finally &amp; Promise.prototype.done小探" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 AI&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="https://github.com/AIluffy/AIluffy.github.io">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+</body>
+</html>
